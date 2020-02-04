@@ -3,7 +3,7 @@ import {Article} from '../../interfaces/interfaces';
 
 import {InAppBrowser} from '@ionic-native/in-app-browser/ngx';
 import {SocialSharing} from '@ionic-native/social-sharing/ngx';
-import {ActionSheetController} from '@ionic/angular';
+import {ActionSheetController, Platform} from '@ionic/angular';
 import {DataLocalService} from '../../services/data-local.service';
 
 @Component({
@@ -20,7 +20,8 @@ export class NoticiaComponent implements OnInit {
     constructor(private iab: InAppBrowser,
                 private actionSheetCtrl: ActionSheetController,
                 private socialSharing: SocialSharing,
-                private dataLocalService: DataLocalService) {
+                private dataLocalService: DataLocalService,
+                private platform: Platform) {
     }
 
     ngOnInit() {
@@ -40,12 +41,7 @@ export class NoticiaComponent implements OnInit {
                     icon: 'share',
                     cssClass: 'action-dark',
                     handler: () => {
-                        this.socialSharing.share(
-                            this.noticia.title,
-                            this.noticia.source.name,
-                            null,
-                            this.noticia.url
-                        );
+                        this.compartirNoticia();
                     }
                 },
                 {
@@ -71,5 +67,28 @@ export class NoticiaComponent implements OnInit {
                 }]
         });
         await actionSheet.present();
+    }
+
+    compartirNoticia() {
+
+        if (this.platform.is('cordova')) {
+
+            this.socialSharing.share(
+                this.noticia.title,
+                this.noticia.source.name,
+                null,
+                this.noticia.url
+            );
+        } else if (navigator['share']) {
+            navigator['share']({
+                title: this.noticia.title,
+                text: this.noticia.description,
+                url: this.noticia.url,
+            })
+                .then(() => console.log('Successful share'))
+                .catch((error) => console.log('Error sharing', error));
+        } else {
+            alert('Su dispositivo actual no soporta esta caracteristica');
+        }
     }
 }
